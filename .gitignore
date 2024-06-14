@@ -19,7 +19,9 @@
 *.xlsx
 *.xls
 *.zip
+*.Rproj
 *.png
+*.pdf
 *.pptx
 *.tfl
 *.twb
