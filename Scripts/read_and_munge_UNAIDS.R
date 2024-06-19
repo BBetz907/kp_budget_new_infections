@@ -24,46 +24,47 @@ year <- readxl::read_excel(path = "Data/Korenromp JAIDS 2024 Country level data.
     colnames()  |> str_remove_all("ni_") |> str_replace_all("k_ps", "kp") |> 
     print()
   
-  perc_ni_headers <- c(header_country_codes, str_c("perc_ni_", header_pop_codes[4:15]), str_c("perc_ni_", header_pop_codes[17:20]))
 
-  count_ni_headers <- c(header_country_codes, str_c("count_ni_", header_pop_codes[1:16]))
+  #pull headers from data source and add fiscal year as the last
+  count_ni_headers <- c(header_country_codes, str_c("count_ni_", header_pop_codes[1:16]), "fiscal_year")
   
   #return to do the same for PSEs, prev, incidence rates  by KP in later populations
   
  
   # IMPORT ------------------------------------------------------------------
-  
-  unaids_percent_ni <- readxl::read_excel(path = "Data/Korenromp JAIDS 2024 Country level data.xlsx", sheet = "2022", 
-                               range = "A3:CX177", 
-                               col_names = FALSE) |> 
-    select(1,3,4,23,25,27,29, 31,33,36, 38, 40, 42, 44, 46,49:52) |> 
-    slice(1:172,175)
-  
-  colnames(unaids_percent_ni) <- perc_ni_headers
-  
-  glimpse(unaids_percent_ni)
-  
-  ########
-    
-  unaids_count_ni <- readxl::read_excel(path = "Data/Korenromp JAIDS 2024 Country level data.xlsx", sheet = "2022", 
-                                          range = "A3:CX177", 
-                                          col_names = FALSE) |> 
-    select(1,3,4,8:10, 24,26,28,30, 32,34,37, 39, 41, 43, 45, 47, 48) |> 
-    slice(1:172,175)
-  
-  colnames(unaids_count_ni) <- count_ni_headers
-  
-  glimpse(unaids_count_ni)
-  glimpse(unaids_count_ni_2010)
+  # perc_ni_headers <- c(header_country_codes, str_c("perc_ni_", header_pop_codes[4:15]), str_c("perc_ni_", header_pop_codes[17:20]))
+  # 
+  # unaids_percent_ni <- readxl::read_excel(path = "Data/Korenromp JAIDS 2024 Country level data.xlsx", sheet = "2022", 
+  #                              range = "A3:CX177", 
+  #                              col_names = FALSE) |> 
+  #   select(1,3,4,23,25,27,29, 31,33,36, 38, 40, 42, 44, 46,49:52) |> 
+  #   slice(1:172,175)
+  # 
+  # colnames(unaids_percent_ni) <- perc_ni_headers
+  # 
+  # glimpse(unaids_percent_ni)
   
   ########
+  sheet_names <- c("2022", "2010")
+  file_path <- "Data/Korenromp JAIDS 2024 Country level data.xlsx"
   
-
-unaids_ni <-  unaids_count_ni |> 
-    mutate(fiscal_year = year) |> 
-    bind_rows(unaids_count_ni_2010) |> 
+  keep_select <- function(df) {
+    df |> 
+      select(1,3,4,8:10, 24,26,28,30, 32,34,37, 39, 41, 43, 45, 47, 48) |> 
+      slice(1:172,175)
+  }
+  
+  
+  unaids_ni <-  map_dfr(sheet_names, ~ {
+    readxl::read_excel(file_path, 
+                       sheet = .x, 
+                       range = "A3:CX177", 
+                       col_names = FALSE) |> 
+      keep_select() |> 
+      mutate(fiscal_year = .x)}) |> 
+    set_names(count_ni_headers) |> 
     filter(!is.na(country)) |> 
-    mutate(fiscal_year = if_else(is.na(fiscal_year), 2010, fiscal_year),
+    mutate(
            count_ni_kp = count_ni_sw + count_ni_msm_tgw + count_ni_tgw + count_ni_pwid,
            count_ni_kp_partners = count_ni_all_non_client_partners_of_kp_all_countries_incl_extrapolation - count_ni_wives_of_fsw_clients,
            count_ni_kp_and_partners = count_ni_kp + count_ni_kp_partners,
