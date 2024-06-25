@@ -85,7 +85,7 @@
     #           position = position_nudge(y=-0.15)) +
     # si_style_ygrid() +
     si_style_xyline()+
-    scale_y_continuous(labels = percent_format(), breaks = seq(0, 1, by = 0.1), limits = c(0, .58),
+    scale_y_continuous(labels = percent_format(), breaks = seq(0, 1, by = 0.1), limits = c(0, .70),
                        expand = c(0, 0)) +
     theme(axis.text.x = element_text(size=12),
           axis.title.x = element_blank(),
