@@ -64,8 +64,10 @@ ni_pepfar_country <- ea_hts_prev |> select(country, ou, geo) |>
                         pop %in% c("clients of fsw", "wives of fsw clients") ~ "Clients of SW & their partners",
                         pop %in% c("MSM & TGW", "PWID", "Sex workers") ~ "KP",
                         .default = pop
-                        )) |> 
-  count(pop2, pop) |> 
+                        ),
+         pop3 = case_when(pop2 %in% c("KP", "Partners of KP") ~ "KP & their partners",
+                          pop2 == "Total" ~ "Total")) |> 
+  # count(pop2, pop) |> 
   # mutate(geo = factor(geo, levels = c("Sub-Saharan Africa", "Outside Sub-Saharan Africa")),
   # fiscal_year = as.character(fiscal_year)
   # ) |> 
