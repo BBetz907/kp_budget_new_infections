@@ -65,7 +65,7 @@ year <- readxl::read_excel(path = "Data/Korenromp JAIDS 2024 Country level data.
     set_names(count_ni_headers) |> 
     filter(!is.na(country)) |> 
     mutate(
-           count_ni_kp = count_ni_sw + count_ni_msm_tgw + count_ni_tgw + count_ni_pwid,
+           count_ni_kp = count_ni_sw + count_ni_msm_excl_tgw + count_ni_tgw + count_ni_pwid,
            count_ni_kp_partners = count_ni_all_non_client_partners_of_kp_all_countries_incl_extrapolation - count_ni_wives_of_fsw_clients,
            count_ni_kp_and_partners = count_ni_kp + count_ni_kp_partners,
            count_ni_kp_clients_partners = count_ni_kp + count_ni_all_non_client_partners_of_kp_all_countries_incl_extrapolation + count_ni_clients_of_fsw,
@@ -75,7 +75,7 @@ year <- readxl::read_excel(path = "Data/Korenromp JAIDS 2024 Country level data.
            percent_ni_kp_clients_partners =  count_ni_kp_clients_partners / count_ni_m_f_15_49y,
            ) |> 
     select(1:3, fiscal_year, percent_ni_kp, percent_ni_kp_and_partners, percent_ni_kp_clients_partners, count_ni_kp, count_ni_kp_partners, count_ni_kp_and_partners, count_ni_kp_clients_partners, count_ni_m_f_15_49y,
-           count_ni_wives_of_fsw_clients, count_ni_clients_of_fsw, count_ni_sw, count_ni_msm_tgw, count_ni_tgw, count_ni_pwid, count_ni_msm_tgw, count_ni_m_15_49y, count_ni_f_15_49y) |> 
+           count_ni_wives_of_fsw_clients, count_ni_clients_of_fsw, count_ni_sw, count_ni_msm_excl_tgw, count_ni_tgw, count_ni_pwid, count_ni_m_15_49y, count_ni_f_15_49y) |> 
     mutate(
             country = case_when(country == "United Republic of Tanzania" ~ "Tanzania",
                                country == "Viet Nam" ~ "Vietnam",

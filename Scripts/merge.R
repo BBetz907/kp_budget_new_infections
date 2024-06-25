@@ -35,7 +35,8 @@ unaids_ni_pepfar_ea |> filter(country == "Angola") |> glimpse()
 
 
 # merge 2, 2010 and 2022 -----------------
-ni_pepfar_country <- ea_hts_prev |> select(country, ou, geo) |> 
+ni_pepfar_country <- ea_hts_prev |> 
+  group_by(country, ou, geo) |> summarize(.groups = "drop") |> 
   inner_join(unaids_ni) |> 
   select(-contains("percent")) |> 
   group_by(geo, 
@@ -43,6 +44,7 @@ ni_pepfar_country <- ea_hts_prev |> select(country, ou, geo) |>
            fiscal_year
   ) |> 
   summarise(across(c(starts_with("count_ni_")), ~ sum(.x, na.rm = TRUE)), .groups = "drop") |> 
+  mutate(count_ni_remaining_population = count_ni_m_f_15_49y - count_ni_kp_clients_partners) |> 
   pivot_longer(cols = c(starts_with("count_ni_")), 
                names_to = "pop", values_to = "count", 
                names_prefix = "count_ni_",
@@ -50,29 +52,39 @@ ni_pepfar_country <- ea_hts_prev |> select(country, ou, geo) |>
               ) |> 
   mutate(pop = str_replace_all(pop, "kp", "KP"),
          pop = case_when(
-                         pop == "m_15_49y" ~ "total males (15-49)",
-                         pop == "f_15_49y" ~ "total females (15-49)",
-                         pop == "msm_tgw"  ~ "MSM & TGW",
+                         pop == "msm_excl_tgw"  ~ "MSM",
+                         pop == "tgw"  ~ "TGW",
                          pop == "pwid"     ~ "PWID",
-                         pop == "sw"       ~ "Sex workers",
+                         pop == "sw"       ~ "SW",
                          pop == "KP_partners" ~ "Partners of KP",
                          .default = str_replace_all(pop, "_", " ")
                          ),
          ) |> 
-  filter(!pop %in% c("KP", "KP clients partners", "msm tg", "KP and partners", "tgw", "m f 15 49y")) |> 
-  mutate(pop2=case_when(str_detect(pop, "total") ~ "Total",
+  filter(!pop %in% c("KP", "KP clients partners", "KP and partners",  "f 15 49y",  "m 15 49y")) |> 
+  mutate(pop2=case_when(
+                        # str_detect(pop, "total") ~ "Total",
                         pop %in% c("clients of fsw", "wives of fsw clients") ~ "Clients of SW & their partners",
-                        pop %in% c("MSM & TGW", "PWID", "Sex workers") ~ "KP",
-                        .default = pop
+                        pop %in% c("MSM", "TGW", "PWID", "SW") ~ "KP",
+                        pop == "Partners of KP" ~ pop,
+                        .default = "remaining population"
+                        # .default = pop
                         ),
-         pop3 = case_when(pop2 %in% c("KP", "Partners of KP") ~ "KP & their partners",
-                          pop2 == "Total" ~ "Total")) |> 
-  # count(pop2, pop) |> 
+         pop3 = case_when(pop2 == "KP" ~ "KP",
+                          .default = "remaining population"),
+         pop4 = case_when(pop2 %in% c("KP", "Partners of KP") ~ "KP & their partners",
+                          .default = "remaining population"),
+         pop5 = case_when(pop2 %in% c("KP", "Partners of KP", "Clients of SW & their partners") ~ "KP, clients, and partners",
+                          .default = "remaining population"),
+         count = case_when(pop == "m f 15 49y" ~ -count, .default = count)
+         ) |> 
+  # count(pop5, pop4, pop3, pop2, pop) |>
   # mutate(geo = factor(geo, levels = c("Sub-Saharan Africa", "Outside Sub-Saharan Africa")),
   # fiscal_year = as.character(fiscal_year)
   # ) |> 
   # pivot_longer(cols = 2:6) |> 
   print()
+
+# Create other females, other males. Sum in Tableau
 
 write_csv(ni_pepfar_country, "Dataout/unaids_ni_pepfar_country.csv")
 
