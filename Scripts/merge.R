@@ -40,6 +40,7 @@ ni_pepfar_country <- ea_hts_prev |>
   inner_join(unaids_ni) |> 
   select(-contains("percent")) |> 
   group_by(geo, 
+           ou,
            country,
            fiscal_year
   ) |> 
@@ -84,7 +85,6 @@ ni_pepfar_country <- ea_hts_prev |>
   # pivot_longer(cols = 2:6) |> 
   print()
 
-# Create other females, other males. Sum in Tableau
 
 write_csv(ni_pepfar_country, "Dataout/unaids_ni_pepfar_country.csv")
 
