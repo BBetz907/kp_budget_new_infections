@@ -13,19 +13,21 @@ library(tidyverse)
 # merge 1, UNAIDS New Infections and PEPFAR budget data -------------
 unaids_ni_2022 <- unaids_ni |> filter(fiscal_year == 2022) |> 
   select(-fiscal_year, -count_ni_wives_of_fsw_clients, -count_ni_clients_of_fsw, -count_ni_sw, 
-         -count_ni_msm_tgw, -count_ni_tgw, -count_ni_pwid, -count_ni_msm_tgw, -count_ni_m_15_49y, -count_ni_f_15_49y)
+         -count_ni_pwid, -count_ni_msm_excl_tgw, -count_ni_tgw, -count_ni_m_15_49y, -count_ni_f_15_49y)
 
 #now bring together to expand data set
-unaids_ni_pepfar_ea <- ea_hts_prev |> 
-  left_join(unaids_ni_2022, by = "country") |> 
+unaids_ni_pepfar <- 
+  # ea |> 
+  # left_join(
+    unaids_ni_2022 #, by = "country") |> 
   # bind_rows(dummy_data) |> 
   # mutate(across(c(percent_ni_kp:count_ni_f_15_49y, ~if_else(is.na(country), NA, .x)))) |> 
-  glimpse()
+  # glimpse()
 
 funding_below <- unaids_ni_pepfar_ea |> filter(fiscal_year ==2024, percent_kp_programmed < 0.95*percent_ni_kp_and_partners) |> select(country, percent_kp_programmed, percent_ni_kp_and_partners)
 write_csv(funding_below, "Dataout/fundingbelow.csv")
 
-write_csv(unaids_ni_pepfar_ea, "Dataout/unaids_ni_ea.csv")
+write_csv(unaids_ni_pepfar, "Dataout/unaids_ni.csv")
 
 
 unaids_ni_pepfar_ea |> count(ou, country, count_ni_kp) |> print(n=53)

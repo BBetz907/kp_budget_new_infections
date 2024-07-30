@@ -3,7 +3,7 @@
 # REF ID:   aa5590af 
 # LICENSE:  MIT
 # DATE:     2024-06-11
-# UPDATED: 
+# UPDATED: edited to remove sub-totals
 
 # DEPENDENCIES ------------------------------------------------------------
   
@@ -26,7 +26,8 @@ allocated_kp_beneficiaries <- c("People Who Inject Drugs (Allocated)", "Transgen
     filter(fiscal_year %in% c("2024", "2025"),
       data_stream %in% c("FSD", "Initiative"),
             data_stream != "MER",
-           program_area %in% c("PREV", "HTS")) |> 
+           # program_area %in% c("PREV", "HTS")
+      ) |> 
   mutate(country = if_else(is.na(country) & !str_detect(ou, "Region"), ou, country),
           targeted_kp_funding = case_when(sub_beneficiary == "People in Prisons (Allocated)" ~ "Other",
                                          beneficiary=="Key Populations (Targeted)"  ~ "KP",
@@ -51,7 +52,8 @@ allocated_kp_beneficiaries <- c("People Who Inject Drugs (Allocated)", "Transgen
    janitor::clean_names() |> 
    mutate(across(c("kp_programmed", "other_programmed"), ~replace_na(.,0)),
           total_programmed_funding = kp_programmed + other_programmed,
-          percent_kp_programmed = round(kp_programmed / total_programmed_funding ,3)) |> 
+          # percent_kp_programmed = round(kp_programmed / total_programmed_funding ,3)
+          ) |> 
    glimpse()
   
  allocated <- df |>  filter(data_stream == "FSD") |>    group_by(fiscal_year, data_stream, program_area, allocated_kp_funding, ou, country) |> 
@@ -60,7 +62,7 @@ allocated_kp_beneficiaries <- c("People Who Inject Drugs (Allocated)", "Transgen
    janitor::clean_names() |> 
    mutate(across(c("kp_allocated", "other_allocated"), ~replace_na(.,0)),
           total_allocated_funding = kp_allocated + other_allocated,
-          percent_kp_allocated = round(kp_allocated / total_allocated_funding ,3),
+          # percent_kp_allocated = round(kp_allocated / total_allocated_funding ,3),
          ) |> 
    glimpse()
  
@@ -78,15 +80,21 @@ ea <- programmed |> inner_join(allocated) |> select(-contains("other")) |>
   
 ea |> count(geo, ou) |> gt::gt() 
 
-write_csv(ea, "Dataout/pepfar_budget_expenditure.csv")
+ea <- ea |> 
+  # filter(fiscal_year==2024)  |>  
+  mutate(
+  total_funding = total_programmed_funding) 
 
+write_csv(ea, "Dataout/pepfar_budget_expenditure.csv")
+ea |> count(fiscal_year)
 program_area_combined <- ea |> count(program_area)  |> pull(program_area) |> str_c(collapse = ", ")
 
 ea_hts_prev <- ea |> mutate(program_area = program_area_combined) |> group_by(across(-c("kp_programmed":"percent_kp_allocated"))) |> 
   summarize(across(c("kp_programmed":"percent_kp_allocated"), ~ sum(., na.rm = TRUE)), .groups = "drop") |> 
-  mutate(percent_kp_allocated  = round(kp_allocated / total_allocated_funding ,3),
-         percent_kp_programmed = round(kp_programmed / total_programmed_funding ,3),
-         total_funding = total_programmed_funding) |> select(-total_programmed_funding, -total_allocated_funding)
+  mutate(
+         # percent_kp_allocated  = round(kp_allocated / total_allocated_funding ,3),
+         # percent_kp_programmed = round(kp_programmed / total_programmed_funding ,3),
+         total_funding = total_programmed_funding) ## |> select(-total_programmed_funding, -total_allocated_funding)
 
 ea |> mutate(program_area = program_area_combined) |> group_by(across(-c("kp_programmed":"percent_kp_allocated"))) |> 
   summarize(across(c("kp_programmed":"percent_kp_allocated"), ~ sum(., na.rm = TRUE)), .groups = "drop") |> 
